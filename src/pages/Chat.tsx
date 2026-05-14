@@ -1130,141 +1130,150 @@ const Chat = () => {
           void loadPlanCatalog();
         }
       }}>
-        <DialogContent className="max-w-3xl border-border bg-card">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-xl">
-              <Zap className="h-5 w-5 text-primary" />
-              Subscriptions & Top-Up
-            </DialogTitle>
-            <DialogDescription>
-              Pick a credit pack to keep Safyne routing your tasks to the best model.
-            </DialogDescription>
-          </DialogHeader>
+        <DialogContent className="flex max-h-[min(90dvh,880px)] w-[calc(100vw-1.5rem)] max-w-3xl flex-col gap-0 overflow-hidden border-border bg-card p-0 sm:w-full">
+          <div className="shrink-0 space-y-4 border-b border-border px-4 pb-4 pr-12 pt-6 sm:px-6 sm:pr-14">
+            <DialogHeader className="space-y-2 text-left">
+              <DialogTitle className="flex items-center gap-2 text-xl">
+                <Zap className="h-5 w-5 text-primary" />
+                Subscriptions & Top-Up
+              </DialogTitle>
+              <DialogDescription className="text-left">
+                Top up credits or choose a subscription plan.
+              </DialogDescription>
+            </DialogHeader>
 
-          <div className="mt-2 rounded-xl border border-border bg-secondary/40 px-4 py-3">
-            <p className="text-xs uppercase tracking-wider text-muted-foreground">Current Balance</p>
-            <p className="mt-1 flex items-center gap-1.5 text-2xl font-bold text-primary">
-              <Zap className="h-5 w-5 fill-primary" />
-              {balanceCredits} Credits
-            </p>
+            <div className="rounded-xl border border-border bg-secondary/40 px-4 py-3">
+              <p className="text-xs uppercase tracking-wider text-muted-foreground">Current Balance</p>
+              <p className="mt-1 flex items-center gap-1.5 text-2xl font-bold text-primary">
+                <Zap className="h-5 w-5 fill-primary" />
+                {balanceCredits} Credits
+              </p>
+            </div>
           </div>
 
-          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
-            {topUpPlans.map((p) => (
-              <div
-                key={p.code}
-                className={`relative flex flex-col rounded-xl border p-4 transition ${
-                  p.code === "catalyst"
-                    ? "border-primary/60 bg-primary/5 shadow-[var(--shadow-glow)]"
-                    : "border-border bg-secondary/40"
-                }`}
-              >
-                {p.code === "catalyst" && (
-                  <span className="absolute -top-2 right-3 rounded-full bg-primary px-2 py-0.5 text-[10px] font-semibold text-primary-foreground">
-                    Best Value
-                  </span>
-                )}
-                <p className="text-sm font-semibold">{p.name}</p>
-                <p className="mt-3 text-2xl font-bold">₹{p.priceInr}</p>
-                <p className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
-                  <Zap className="h-3.5 w-3.5 text-primary" />
-                  {p.credits.toLocaleString()} Credits
-                </p>
-                <button
-                  onClick={() => handleBuy(p.code)}
-                  disabled={loadingPlan !== null}
-                  className={`mt-4 flex h-10 items-center justify-center gap-1.5 rounded-lg text-sm font-semibold transition disabled:opacity-60 ${
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 [-webkit-overflow-scrolling:touch] sm:px-6 sm:py-5">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              {topUpPlans.map((p) => (
+                <div
+                  key={p.code}
+                  className={`relative flex flex-col rounded-xl border p-4 transition ${
                     p.code === "catalyst"
-                      ? "bg-primary text-primary-foreground hover:bg-[hsl(var(--primary-glow))]"
-                      : "border border-border bg-background hover:border-primary/50 hover:bg-secondary"
+                      ? "border-primary/60 bg-primary/5 shadow-[var(--shadow-glow)]"
+                      : "border-border bg-secondary/40"
                   }`}
                 >
-                  {loadingPlan === p.code ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <>
-                      <Zap className="h-3.5 w-3.5" />
-                      Buy ⚡ {p.credits.toLocaleString()}
-                    </>
+                  {p.code === "catalyst" && (
+                    <span className="absolute -top-2 right-3 rounded-full bg-primary px-2 py-0.5 text-[10px] font-semibold text-primary-foreground">
+                      Best Value
+                    </span>
                   )}
-                </button>
-              </div>
-            ))}
-          </div>
-          <div className="mt-6">
-            <p className="mb-3 text-xs uppercase tracking-wider text-muted-foreground">Subscriptions (Paid)</p>
-            {pendingVerification && (
-              <div className="mb-3 flex items-center justify-between gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
-                <span>Payment received. Verification pending for {pendingVerification.subscriptionCode.toUpperCase()}.</span>
-                <button
-                  type="button"
-                  onClick={handleRetryVerification}
-                  disabled={loadingSubscription !== null}
-                  className="rounded-md border border-amber-300/40 px-2 py-1 text-[11px] font-semibold text-amber-100 hover:bg-amber-500/20 disabled:opacity-60"
-                >
-                  Retry verification
-                </button>
-              </div>
-            )}
-            {loadingSubscription && (
-              <div className="mb-3 rounded-lg border border-border bg-secondary/40 px-3 py-2 text-xs text-muted-foreground">
-                {subscriptionStage === "creating" && "Creating secure order..."}
-                {subscriptionStage === "awaiting_payment" && "Waiting for payment confirmation in Razorpay..."}
-                {subscriptionStage === "verifying" && "Verifying payment securely..."}
-              </div>
-            )}
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              {subscriptionPlans.map((p) => {
-                const isActiveSubscription = p.code === activeSubscriptionCode;
-                const m = p.marketing;
-                const uploadMb = m?.maxUploadBytes ? Math.round(m.maxUploadBytes / (1024 * 1024)) : null;
-                return (
-                  <div key={p.code} className="rounded-xl border border-border bg-secondary/40 p-4">
-                    <p className="text-sm font-semibold">{p.name}</p>
-                    <p className="mt-2 text-2xl font-bold">₹{p.priceInr}</p>
-                    <p className="text-xs text-muted-foreground">${typeof p.priceUsd === "number" ? p.priceUsd.toFixed(2) : "—"} USD</p>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      Activation {p.activationCostCredits} Cr · Grant {p.monthlyGrantCredits.toLocaleString()} Cr
-                    </p>
-                    {m ? (
-                      <ul className="mt-2 list-inside list-disc space-y-0.5 text-[11px] leading-snug text-muted-foreground">
-                        <li>Daily chat credits: {m.dailyCreditLimitCr} Cr</li>
-                        <li>Images / day: {m.dailyImageGenerationLimit} ({m.imageModelName}, {m.imageCreditsPerImage} Cr each)</li>
-                        <li>Doc uploads / day: {m.dailyDocumentUploadLimit} · Max file {uploadMb} MB</li>
-                        <li>Text models: {m.includedTextModels.join(", ")}</li>
-                        <li>~{m.textBurnCreditsPer1kTokens} Cr per 1k tokens (text)</li>
-                      </ul>
+                  <p className="text-sm font-semibold">{p.name}</p>
+                  <p className="mt-3 text-2xl font-bold">₹{p.priceInr}</p>
+                  <p className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
+                    <Zap className="h-3.5 w-3.5 text-primary" />
+                    {p.credits.toLocaleString()} Credits
+                  </p>
+                  <button
+                    onClick={() => handleBuy(p.code)}
+                    disabled={loadingPlan !== null}
+                    className={`mt-4 flex h-10 min-h-[44px] items-center justify-center gap-1.5 rounded-lg text-sm font-semibold transition disabled:opacity-60 ${
+                      p.code === "catalyst"
+                        ? "bg-primary text-primary-foreground hover:bg-[hsl(var(--primary-glow))]"
+                        : "border border-border bg-background hover:border-primary/50 hover:bg-secondary"
+                    }`}
+                  >
+                    {loadingPlan === p.code ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        Smart {p.policy.smartCapPercent}% · Pro {p.policy.proCapPercent}% · Max {p.policy.maxOutputTokens} tokens
-                      </p>
+                      <>
+                        <Zap className="h-3.5 w-3.5" />
+                        Buy ⚡ {p.credits.toLocaleString()}
+                      </>
                     )}
-                    <button
-                      onClick={() => handleSubscribe(p.code)}
-                      disabled={loadingSubscription !== null || isActiveSubscription}
-                      className={`mt-4 flex h-10 w-full items-center justify-center gap-1.5 rounded-lg text-sm font-semibold transition disabled:opacity-80 ${
-                        isActiveSubscription
-                          ? "border border-green-500/60 bg-green-600 text-white"
-                          : "border border-border bg-background hover:border-primary/50 hover:bg-secondary"
-                      }`}
-                    >
-                      {loadingSubscription === p.code ? (
-                        <>
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          {subscriptionStage === "creating" && "Creating order..."}
-                          {subscriptionStage === "awaiting_payment" && "Awaiting payment..."}
-                          {subscriptionStage === "verifying" && "Verifying..."}
-                        </>
-                      ) : isActiveSubscription ? (
-                        <>
-                          <Check className="h-4 w-4" />
-                          Active
-                        </>
-                      ) : "Pay & Activate"}
-                    </button>
-                  </div>
-                );
-              })}
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-6">
+              <p className="mb-3 text-xs uppercase tracking-wider text-muted-foreground">Subscriptions</p>
+              {pendingVerification && (
+                <div className="mb-3 flex flex-col gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200 sm:flex-row sm:items-center sm:justify-between">
+                  <span>Payment received. Verification pending for {pendingVerification.subscriptionCode.toUpperCase()}.</span>
+                  <button
+                    type="button"
+                    onClick={handleRetryVerification}
+                    disabled={loadingSubscription !== null}
+                    className="shrink-0 rounded-md border border-amber-300/40 px-2 py-1.5 text-[11px] font-semibold text-amber-100 hover:bg-amber-500/20 disabled:opacity-60"
+                  >
+                    Retry verification
+                  </button>
+                </div>
+              )}
+              {loadingSubscription && (
+                <div className="mb-3 rounded-lg border border-border bg-secondary/40 px-3 py-2 text-xs text-muted-foreground">
+                  {subscriptionStage === "creating" && "Creating secure order..."}
+                  {subscriptionStage === "awaiting_payment" && "Waiting for payment confirmation in Razorpay..."}
+                  {subscriptionStage === "verifying" && "Verifying payment securely..."}
+                </div>
+              )}
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                {subscriptionPlans.map((p) => {
+                  const isActiveSubscription = p.code === activeSubscriptionCode;
+                  const m = p.marketing;
+                  const fmt = (n: number | undefined) =>
+                    typeof n === "number" && Number.isFinite(n) ? n.toLocaleString() : "—";
+                  return (
+                    <div key={p.code} className="flex flex-col rounded-xl border border-border bg-secondary/40 p-4">
+                      <p className="text-sm font-semibold">{p.name}</p>
+                      <p className="mt-2 text-2xl font-bold">₹{p.priceInr}</p>
+                      <dl className="mt-3 space-y-2 text-sm">
+                        <div className="flex items-start justify-between gap-3">
+                          <dt className="text-muted-foreground">Credits per month</dt>
+                          <dd className="text-right font-medium tabular-nums">{fmt(p.monthlyGrantCredits)}</dd>
+                        </div>
+                        <div className="flex items-start justify-between gap-3">
+                          <dt className="text-muted-foreground">Daily image limit</dt>
+                          <dd className="text-right font-medium tabular-nums">{fmt(m?.dailyImageGenerationLimit)}</dd>
+                        </div>
+                        <div className="flex items-start justify-between gap-3">
+                          <dt className="text-muted-foreground">Daily document limit</dt>
+                          <dd className="text-right font-medium tabular-nums">{fmt(m?.dailyDocumentUploadLimit)}</dd>
+                        </div>
+                        <div className="flex items-start justify-between gap-3">
+                          <dt className="text-muted-foreground">Daily credit spend limit</dt>
+                          <dd className="text-right font-medium tabular-nums">{fmt(m?.dailyCreditLimitCr)}</dd>
+                        </div>
+                      </dl>
+                      <button
+                        onClick={() => handleSubscribe(p.code)}
+                        disabled={loadingSubscription !== null || isActiveSubscription}
+                        className={`mt-4 flex h-10 min-h-[44px] w-full items-center justify-center gap-1.5 rounded-lg text-sm font-semibold transition disabled:opacity-80 ${
+                          isActiveSubscription
+                            ? "border border-green-500/60 bg-green-600 text-white"
+                            : "border border-border bg-background hover:border-primary/50 hover:bg-secondary"
+                        }`}
+                      >
+                        {loadingSubscription === p.code ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            {subscriptionStage === "creating" && "Creating order..."}
+                            {subscriptionStage === "awaiting_payment" && "Awaiting payment..."}
+                            {subscriptionStage === "verifying" && "Verifying..."}
+                          </>
+                        ) : isActiveSubscription ? (
+                          <>
+                            <Check className="h-4 w-4" />
+                            Active
+                          </>
+                        ) : (
+                          "Pay & Activate"
+                        )}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </DialogContent>
