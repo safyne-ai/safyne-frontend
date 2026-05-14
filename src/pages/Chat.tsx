@@ -1196,7 +1196,7 @@ const Chat = () => {
             </div>
 
             <div className="mt-6">
-              <p className="mb-3 text-xs uppercase tracking-wider text-muted-foreground">Subscriptions</p>
+              <p className="mb-3 text-xs uppercase tracking-wider text-muted-foreground">Subscriptions (Paid)</p>
               {pendingVerification && (
                 <div className="mb-3 flex flex-col gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200 sm:flex-row sm:items-center sm:justify-between">
                   <span>Payment received. Verification pending for {pendingVerification.subscriptionCode.toUpperCase()}.</span>
@@ -1221,30 +1221,46 @@ const Chat = () => {
                 {subscriptionPlans.map((p) => {
                   const isActiveSubscription = p.code === activeSubscriptionCode;
                   const m = p.marketing;
-                  const fmt = (n: number | undefined) =>
-                    typeof n === "number" && Number.isFinite(n) ? n.toLocaleString() : "—";
+                  const usd =
+                    typeof p.priceUsd === "number" && Number.isFinite(p.priceUsd) ? p.priceUsd.toFixed(2) : "—";
+                  const uploadMb =
+                    m?.maxUploadBytes && m.maxUploadBytes > 0
+                      ? Math.round(m.maxUploadBytes / (1024 * 1024))
+                      : null;
                   return (
                     <div key={p.code} className="flex flex-col rounded-xl border border-border bg-secondary/40 p-4">
-                      <p className="text-sm font-semibold">{p.name}</p>
-                      <p className="mt-2 text-2xl font-bold">₹{p.priceInr}</p>
-                      <dl className="mt-3 space-y-2 text-sm">
-                        <div className="flex items-start justify-between gap-3">
-                          <dt className="text-muted-foreground">Credits per month</dt>
-                          <dd className="text-right font-medium tabular-nums">{fmt(p.monthlyGrantCredits)}</dd>
+                      <p className="text-base font-semibold leading-tight text-foreground">{p.name}</p>
+                      <p className="mt-2 text-2xl font-bold leading-tight text-foreground">₹{p.priceInr}</p>
+                      <p className="mt-1 text-sm text-muted-foreground">${usd} USD</p>
+                      <p className="mt-3 text-sm font-medium text-foreground">
+                        Grant {p.monthlyGrantCredits.toLocaleString()} Cr
+                      </p>
+                      {m ? (
+                        <div className="mt-4 space-y-2 text-sm leading-relaxed text-muted-foreground">
+                          <p className="text-foreground/90">
+                            Daily chat credits:{" "}
+                            {typeof m.dailyCreditLimitCr === "number"
+                              ? m.dailyCreditLimitCr.toLocaleString()
+                              : "—"}{" "}
+                            Cr
+                          </p>
+                          <p>
+                            {typeof m.dailyImageGenerationLimit === "number"
+                              ? m.dailyImageGenerationLimit.toLocaleString()
+                              : "—"}{" "}
+                            Images / day
+                          </p>
+                          <p>
+                            {typeof m.dailyDocumentUploadLimit === "number"
+                              ? m.dailyDocumentUploadLimit.toLocaleString()
+                              : "—"}{" "}
+                            Doc uploads / day
+                            {uploadMb != null ? ` · Max file ${uploadMb} MB` : ""}
+                          </p>
                         </div>
-                        <div className="flex items-start justify-between gap-3">
-                          <dt className="text-muted-foreground">Daily image limit</dt>
-                          <dd className="text-right font-medium tabular-nums">{fmt(m?.dailyImageGenerationLimit)}</dd>
-                        </div>
-                        <div className="flex items-start justify-between gap-3">
-                          <dt className="text-muted-foreground">Daily document limit</dt>
-                          <dd className="text-right font-medium tabular-nums">{fmt(m?.dailyDocumentUploadLimit)}</dd>
-                        </div>
-                        <div className="flex items-start justify-between gap-3">
-                          <dt className="text-muted-foreground">Daily credit spend limit</dt>
-                          <dd className="text-right font-medium tabular-nums">{fmt(m?.dailyCreditLimitCr)}</dd>
-                        </div>
-                      </dl>
+                      ) : (
+                        <p className="mt-4 text-xs text-muted-foreground">Limits unavailable for this plan.</p>
+                      )}
                       <button
                         onClick={() => handleSubscribe(p.code)}
                         disabled={loadingSubscription !== null || isActiveSubscription}
