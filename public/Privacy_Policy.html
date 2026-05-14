@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy | Safyne</title>
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            background-color: #fefefe;
+        }
+        h1 {
+            font-size: 2.5rem;
+            color: #111;
+            margin-bottom: 10px;
+        }
+        h2 {
+            font-size: 1.5rem;
+            color: #222;
+            margin-top: 40px;
+            border-bottom: 2px solid #eaeaea;
+            padding-bottom: 8px;
+        }
+        p {
+            margin-bottom: 16px;
+            color: #444;
+        }
+        ul {
+            margin-bottom: 24px;
+            padding-left: 24px;
+        }
+        li {
+            margin-bottom: 8px;
+            color: #444;
+        }
+        .last-updated {
+            color: #666;
+            font-style: italic;
+            margin-bottom: 40px;
+        }
+        .contact-email {
+            font-weight: bold;
+            color: #0066cc;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Privacy Policy</h1>
+    <p class="last-updated">Last Updated: May 2026</p>
+
+    <p>Welcome to Safyne ("we," "our," or "us"). We respect your privacy and are committed to protecting your personal data and proprietary API interactions. This Privacy Policy explains how we collect, use, and safeguard your information when you use our AI Compute Exchange platform, APIs, and website.</p>
+
+    <h2>1. Information We Collect</h2>
+    <p>We collect information necessary to provide, secure, and optimize our API routing services:</p>
+    <ul>
+        <li><strong>Account Information:</strong> Name, email address, and authentication credentials (managed securely via our identity provider).</li>
+        <li><strong>Billing Information:</strong> Payment details and transaction history (processed securely by third-party payment gateways like Stripe; we do not store full credit card numbers).</li>
+        <li><strong>API Usage Data:</strong> IP addresses, request timestamps, latency metrics, and API key utilization to enforce rate limits and calculate billing.</li>
+        <li><strong>Prompt & Generation Data:</strong> The text, parameters, and generated outputs routed through our exchange. <em>Note: Safyne does not train AI models on your private API payloads.</em></li>
+    </ul>
+
+    <h2>2. How We Use Your Information</h2>
+    <p>Your data is strictly used to operate the Safyne exchange:</p>
+    <ul>
+        <li>To authenticate your requests and deduct the appropriate system credits.</li>
+        <li>To route your API payloads to the requested Tier A, B, or C AI models.</li>
+        <li>To monitor system health, prevent abuse (e.g., double-spend attacks), and debug routing failures.</li>
+        <li>To process transactions, issue refunds, and send billing alerts.</li>
+    </ul>
+
+    <h2>3. Third-Party Sub-Processors</h2>
+    <p>To provide our services, we securely transmit necessary data to trusted infrastructure partners:</p>
+    <ul>
+        <li><strong>AI Model Providers:</strong> Your prompts are sent to third-party model providers (for example OpenAI or other vendors we configure) to generate responses. We require these partners to adhere to strict data non-retention and non-training policies where applicable.</li>
+        <li><strong>Infrastructure:</strong> Database hosting (e.g., Supabase), telemetry, and secure error logging services.</li>
+        <li><strong>Payment Processors:</strong> Financial transactions are handled entirely by compliant payment gateways.</li>
+    </ul>
+
+    <h2>4. Data Security</h2>
+    <p>We implement enterprise-grade security measures, including Row-Level Security (RLS) on our databases, strict API payload validation, and encrypted JWT pipelines. However, no internet transmission is 100% secure. You are responsible for keeping your Safyne API keys confidential.</p>
+
+    <h2>5. Data Retention</h2>
+    <p>We retain your account and billing information for as long as your account is active or as needed to comply with legal obligations. API telemetry and error logs are retained for a limited time for debugging purposes before being automatically expunged.</p>
+
+    <h2>6. Your Rights</h2>
+    <p>Depending on your jurisdiction, you may have the right to access, correct, or delete your personal data. You may also revoke your API keys or delete your Safyne account at any time through your developer dashboard.</p>
+
+    <h2>7. Contact Us</h2>
+    <p>If you have any questions about this Privacy Policy or our data routing practices, please contact our security team at:</p>
+    <p><a href="mailto:hello@safyne.com" class="contact-email">safyne.support@gmail.com</a></p>
+
+</body>
+</html>

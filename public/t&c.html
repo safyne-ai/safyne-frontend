@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terms and Conditions | Safyne</title>
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            background-color: #fefefe;
+        }
+        h1 {
+            font-size: 2.5rem;
+            color: #111;
+            margin-bottom: 10px;
+        }
+        h2 {
+            font-size: 1.5rem;
+            color: #222;
+            margin-top: 40px;
+            border-bottom: 2px solid #eaeaea;
+            padding-bottom: 8px;
+        }
+        p {
+            margin-bottom: 16px;
+            color: #444;
+        }
+        ul {
+            margin-bottom: 24px;
+            padding-left: 24px;
+        }
+        li {
+            margin-bottom: 8px;
+            color: #444;
+        }
+        .last-updated {
+            color: #666;
+            font-style: italic;
+            margin-bottom: 40px;
+        }
+        .contact-email {
+            font-weight: bold;
+            color: #0066cc;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Terms and Conditions</h1>
+    <p class="last-updated">Last Updated: May 2026</p>
+
+    <p>Please read these Terms and Conditions carefully before using the Safyne AI Compute Exchange platform, APIs, and associated services (the "Service") operated by Safyne ("we," "us," or "our").</p>
+    <p>By accessing or using the Service, you agree to be bound by these Terms. If you disagree with any part of the terms, you may not access the Service.</p>
+
+    <h2>1. Account and API Key Security</h2>
+    <p>To use Safyne, you must create an account and generate API keys. You are solely responsible for:</p>
+    <ul>
+        <li>Maintaining the confidentiality of your account credentials and API keys.</li>
+        <li>All activities, requests, and compute usage that occur under your API keys, regardless of whether the usage was authorized by you.</li>
+        <li>Immediately notifying us if you suspect any unauthorized use of your API keys.</li>
+    </ul>
+    <p><strong>Never expose your API keys in client-side code, public repositories, or unsecured environments.</strong></p>
+
+    <h2>2. The Safyne Credit System</h2>
+    <p>Safyne operates on a pre-paid credit economy. By using our API, you agree to the following:</p>
+    <ul>
+        <li><strong>Deductions:</strong> API requests deduct credits from your account based on the requested model tier (Tier A, Tier B, or Tier C) and the input/output token volume.</li>
+        <li><strong>Minimum Balance:</strong> The Service will reject API requests if your account falls below the required credit floor for a specific request.</li>
+        <li><strong>Non-Refundable Compute:</strong> Once an API request is successfully processed and compute is delivered, the associated credits are permanently deducted and non-refundable.</li>
+    </ul>
+
+    <h2>3. Acceptable Use and Restrictions</h2>
+    <p>You agree not to use the Safyne exchange to:</p>
+    <ul>
+        <li>Bypass, exploit, or attempt to manipulate the credit deduction engine (e.g., executing double-spend attacks or rate-limit circumvention).</li>
+        <li>Transmit payloads that violate the acceptable use policies of our upstream model providers (e.g., generating illegal content, malware, or engaging in harassment).</li>
+        <li>Reverse engineer, decompile, or attempt to extract the source code of our routing algorithms.</li>
+    </ul>
+    <p>We reserve the right to immediately suspend or terminate your account and revoke API keys without notice if we detect abusive behavior or terms violations.</p>
+
+    <h2>4. Upstream Providers and Uptime</h2>
+    <p>Safyne connects you to third-party AI model providers we integrate with (for example OpenAI or other configured vendors). We do not train or host the underlying foundational models. Therefore:</p>
+    <ul>
+        <li>We cannot guarantee the uptime, response latency, or output quality of upstream models.</li>
+        <li>If an upstream provider experiences an outage, Safyne endpoints utilizing those specific models will also be affected.</li>
+        <li>We reserve the right to add, modify, or remove access to specific AI models or tiers at our discretion.</li>
+    </ul>
+
+    <h2>5. Disclaimer of Warranties</h2>
+    <p>The Service is provided on an "AS IS" and "AS AVAILABLE" basis. Safyne makes no warranties, expressed or implied, regarding the availability, accuracy, or reliability of the API responses. We do not warrant that the Service will be uninterrupted, secure, or completely error-free.</p>
+
+    <h2>6. Limitation of Liability</h2>
+    <p>In no event shall Safyne, its directors, employees, or partners be liable for any indirect, incidental, special, consequential, or punitive damages, including without limitation, loss of profits, data, use, goodwill, or other intangible losses, resulting from your access to or use of (or inability to access or use) the Service.</p>
+
+    <h2>7. Changes to Terms</h2>
+    <p>We reserve the right to modify or replace these Terms at any time. We will provide reasonable notice of any material changes via email or an alert in your developer dashboard. Continued use of the Service after changes constitutes acceptance of the new Terms.</p>
+
+    <h2>8. Contact Us</h2>
+    <p>If you have any questions about these Terms, please contact us at:</p>
+    <p><a href="mailto:hello@safyne.com" class="contact-email">safyne.support@gmail.com</a></p>
+
+</body>
+</html>
