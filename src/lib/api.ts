@@ -134,6 +134,20 @@ export async function getCurrentPlan(token: string) {
   return parseResponse(response);
 }
 
+export async function subscribeFreePlan(token: string) {
+  const response = await fetch(`${API_BASE_URL}/plans/subscribe-free`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(data.error ?? `Request failed with ${response.status}`);
+  }
+  return data;
+}
+
 export async function createTopupOrder(
   token: string,
   packCode: "spark" | "catalyst" | "accelerator"

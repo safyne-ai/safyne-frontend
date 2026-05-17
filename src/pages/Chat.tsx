@@ -51,6 +51,7 @@ import {
   getPlanCatalog,
   getUserInvoices,
   getWalletBalance,
+  subscribeFreePlan,
   submitAiFeedback,
   uploadAttachment,
   verifyTopupPayment,
@@ -245,13 +246,16 @@ const initialSessions: ChatSession[] = [];
 const sampleMessages: Message[] = [];
 
 type TopUpPack = { code: "spark" | "catalyst" | "accelerator"; name: string; priceInr: number; credits: number };
+type SubscriptionPlanCode = "free" | "starter" | "pro" | "power";
+
 type SubscriptionPack = {
-  code: "starter" | "pro" | "power";
+  code: SubscriptionPlanCode;
   name: string;
   priceInr: number;
   priceUsd: number;
   activationCostCredits: number;
   monthlyGrantCredits: number;
+  provider?: "openrouter" | "light_llm";
   marketing?: {
     textBurnCreditsPer1kTokens: number;
     dailyCreditLimitCr: number;
@@ -358,7 +362,7 @@ const Chat = () => {
   const [balanceCredits, setBalanceCredits] = useState(0);
   const [topUpPlans, setTopUpPlans] = useState<TopUpPack[]>([]);
   const [subscriptionPlans, setSubscriptionPlans] = useState<SubscriptionPack[]>([]);
-  const [activeSubscriptionCode, setActiveSubscriptionCode] = useState<"starter" | "pro" | "power" | null>(null);
+  const [activeSubscriptionCode, setActiveSubscriptionCode] = useState<SubscriptionPlanCode | null>(null);
   const [pendingAttachments, setPendingAttachments] = useState<Message["attachments"]>([]);
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -516,7 +520,12 @@ const Chat = () => {
       }));
       await refreshBalance();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to get AI response");
+      const message = error instanceof Error ? error.message : "Failed to get AI response";
+      if (message.toLowerCase().includes("attachment") || message.toLowerCase().includes("upgrade")) {
+        toast.error(message, { description: "Upgrade to a paid plan for document uploads and premium models." });
+      } else {
+        toast.error(message);
+      }
     }
   };
 
@@ -609,7 +618,9 @@ const Chat = () => {
     try {
       const plan = await getCurrentPlan(token);
       const code = plan.code;
-      setActiveSubscriptionCode(code === "starter" || code === "pro" || code === "power" ? code : null);
+      setActiveSubscriptionCode(
+        code === "free" || code === "starter" || code === "pro" || code === "power" ? code : null
+      );
     } catch {
       setActiveSubscriptionCode(null);
     }
@@ -642,15 +653,6 @@ const Chat = () => {
       void loadInvoices();
     }
   }, [settingsOpen, activeSettingsTab, loadInvoices]);
-
-  useEffect(() => {
-    const shouldOpenBilling = searchParams.get("billing") === "1";
-    if (!shouldOpenBilling) return;
-    setTopUpOpen(true);
-    const nextParams = new URLSearchParams(searchParams);
-    nextParams.delete("billing");
-    setSearchParams(nextParams, { replace: true });
-  }, [searchParams, setSearchParams]);
 
   const handleBuy = async (packCode: "spark" | "catalyst" | "accelerator") => {
     if (loadingPlan) return;
@@ -721,6 +723,51 @@ const Chat = () => {
     }
   };
 
+  const handleSubscribeFree = async () => {
+    if (loadingSubscription) return;
+    setLoadingSubscription("free");
+    try {
+      const token = await getAccessToken();
+      if (!token) throw new Error("Please sign in again.");
+      const result = await subscribeFreePlan(token);
+      await refreshCurrentPlan();
+      toast.success(result.message ?? "Free plan activated.");
+      setTopUpOpen(false);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not activate Free plan.");
+    } finally {
+      setLoadingSubscription(null);
+    }
+  };
+
+  useEffect(() => {
+    const shouldOpenBilling = searchParams.get("billing") === "1";
+    if (!shouldOpenBilling) return;
+    setTopUpOpen(true);
+    const planParam = searchParams.get("plan");
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete("billing");
+    nextParams.delete("plan");
+    setSearchParams(nextParams, { replace: true });
+    if (planParam === "free") {
+      void (async () => {
+        if (loadingSubscription) return;
+        setLoadingSubscription("free");
+        try {
+          const token = await getAccessToken();
+          if (!token) return;
+          const result = await subscribeFreePlan(token);
+          await refreshCurrentPlan();
+          toast.success(result.message ?? "Free plan activated.");
+        } catch (error) {
+          toast.error(error instanceof Error ? error.message : "Could not activate Free plan.");
+        } finally {
+          setLoadingSubscription(null);
+        }
+      })();
+    }
+  }, [searchParams, setSearchParams, getAccessToken, refreshCurrentPlan, loadingSubscription]);
+
   const handleSubscribe = async (subscriptionCode: "starter" | "pro" | "power") => {
     if (loadingSubscription) return;
     setLoadingSubscription(subscriptionCode);
@@ -765,6 +812,10 @@ const Chat = () => {
   };
 
   const handleUpload = async (file: File) => {
+    if (activeSubscriptionCode === "free") {
+      toast.error("Document uploads are not available on the Free plan. Upgrade to a paid subscription.");
+      return;
+    }
     const token = await getAccessToken();
     if (!token) throw new Error("Please sign in again.");
     const result = (await uploadAttachment(token, file)) as {
@@ -1142,13 +1193,21 @@ const Chat = () => {
               </DialogDescription>
             </DialogHeader>
 
-            <div className="rounded-xl border border-border bg-secondary/40 px-4 py-3">
-              <p className="text-xs uppercase tracking-wider text-muted-foreground">Current Balance</p>
-              <p className="mt-1 flex items-center gap-1.5 text-2xl font-bold text-primary">
-                <Zap className="h-5 w-5 fill-primary" />
-                {balanceCredits} Credits
+            <motion.div className="rounded-xl border border-border bg-secondary/40 px-4 py-3">
+              <p className="text-xs uppercase tracking-wider text-muted-foreground">
+                {activeSubscriptionCode === "free" ? "Current plan" : "Current Balance"}
               </p>
-            </div>
+              <p className="mt-1 flex items-center gap-1.5 text-2xl font-bold text-primary">
+                {activeSubscriptionCode === "free" ? (
+                  <>Free · OpenRouter basic</>
+                ) : (
+                  <>
+                    <Zap className="h-5 w-5 fill-primary" />
+                    {balanceCredits} Credits
+                  </>
+                )}
+              </p>
+            </motion.div>
           </div>
 
           <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 [-webkit-overflow-scrolling:touch] sm:px-6 sm:py-5">
@@ -1195,7 +1254,42 @@ const Chat = () => {
               ))}
             </div>
 
-            <div className="mt-6">
+            <motion.div
+              className="mt-6 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              <p className="mb-3 text-xs uppercase tracking-wider text-emerald-200/90">Free subscription</p>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <motion.div>
+                  <p className="text-base font-semibold text-foreground">Free</p>
+                  <p className="mt-1 text-sm text-muted-foreground">₹0 · Basic chat via OpenRouter · No credits required</p>
+                </motion.div>
+                <button
+                  type="button"
+                  onClick={handleSubscribeFree}
+                  disabled={loadingSubscription !== null || activeSubscriptionCode === "free"}
+                  className={`flex h-10 min-h-[44px] shrink-0 items-center justify-center gap-1.5 rounded-lg px-4 text-sm font-semibold transition disabled:opacity-80 ${
+                    activeSubscriptionCode === "free"
+                      ? "border border-green-500/60 bg-green-600 text-white"
+                      : "border border-emerald-500/40 bg-emerald-600/90 text-white hover:bg-emerald-600"
+                  }`}
+                >
+                  {loadingSubscription === "free" ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : activeSubscriptionCode === "free" ? (
+                    <>
+                      <Check className="h-4 w-4" />
+                      Active
+                    </>
+                  ) : (
+                    "Start free"
+                  )}
+                </button>
+              </div>
+            </motion.div>
+
+            <motion.div className="mt-6">
               <p className="mb-3 text-xs uppercase tracking-wider text-muted-foreground">Subscriptions (Paid)</p>
               {pendingVerification && (
                 <div className="mb-3 flex flex-col gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200 sm:flex-row sm:items-center sm:justify-between">
@@ -1217,8 +1311,10 @@ const Chat = () => {
                   {subscriptionStage === "verifying" && "Verifying payment securely..."}
                 </div>
               )}
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                {subscriptionPlans.map((p) => {
+              <motion.div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                {subscriptionPlans
+                  .filter((p) => p.code !== "free")
+                  .map((p) => {
                   const isActiveSubscription = p.code === activeSubscriptionCode;
                   const m = p.marketing;
                   const usd =
@@ -1262,7 +1358,7 @@ const Chat = () => {
                         <p className="mt-4 text-xs text-muted-foreground">Limits unavailable for this plan.</p>
                       )}
                       <button
-                        onClick={() => handleSubscribe(p.code)}
+                        onClick={() => handleSubscribe(p.code as "starter" | "pro" | "power")}
                         disabled={loadingSubscription !== null || isActiveSubscription}
                         className={`mt-4 flex h-10 min-h-[44px] w-full items-center justify-center gap-1.5 rounded-lg text-sm font-semibold transition disabled:opacity-80 ${
                           isActiveSubscription
@@ -1289,8 +1385,8 @@ const Chat = () => {
                     </div>
                   );
                 })}
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
           </div>
         </DialogContent>
       </Dialog>

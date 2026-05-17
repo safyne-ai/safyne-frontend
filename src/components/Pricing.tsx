@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { useTheme } from "@/hooks/use-theme";
+import { subscribeFreePlan } from "@/lib/api";
 
 type PackCode = "spark" | "catalyst" | "accelerator";
 
@@ -71,7 +72,7 @@ const cardTransition = { duration: 0.55, ease: [0.22, 1, 0.36, 1] as const };
  */
 const Pricing = () => {
   const navigate = useNavigate();
-  const { isLoggedIn } = useAuth();
+  const { isLoggedIn, getAccessToken } = useAuth();
   const { theme } = useTheme();
   const isLight = theme === "light";
   const reduceMotion = useReducedMotion();
@@ -87,6 +88,25 @@ const Pricing = () => {
       return;
     }
     navigate(`/auth?next=/chat?billing=1&pack=${packCode}`);
+  };
+
+  const handleStartFree = async () => {
+    if (!isLoggedIn) {
+      navigate("/auth?next=/chat?billing=1&plan=free");
+      return;
+    }
+    try {
+      const token = await getAccessToken();
+      if (!token) {
+        navigate("/auth?next=/chat?billing=1&plan=free");
+        return;
+      }
+      const result = await subscribeFreePlan(token);
+      toast.success(result.message ?? "Free plan activated.");
+      navigate("/chat");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not activate Free plan.");
+    }
   };
 
   const sectionBg = isLight
@@ -158,7 +178,48 @@ const Pricing = () => {
           </motion.div>
         </motion.div>
 
-        <div className="mt-[clamp(4rem,12vw,111px)] flex flex-col flex-wrap items-center justify-center gap-2.5 sm:flex-row sm:items-stretch">
+        <motion.div
+          className="mb-8 flex w-full max-w-[307px] flex-col rounded-[10px] border px-5 py-5 sm:max-w-[640px]"
+          initial="hidden"
+          animate={inView ? "visible" : "hidden"}
+          variants={{ hidden: headHidden, visible: headShow }}
+          style={
+            isLight
+              ? { borderColor: "rgba(16, 185, 129, 0.35)", background: "rgba(236, 253, 245, 0.5)" }
+              : { borderColor: "rgba(52, 211, 153, 0.35)", background: "rgba(6, 78, 59, 0.15)" }
+          }
+        >
+          <h3 className={`text-2xl font-medium ${isLight ? "text-slate-900" : "text-white"}`}>Free</h3>
+          <p className={`mt-1 text-base ${isLight ? "text-slate-600" : "text-white/70"}`}>₹0 · Basic answers via OpenRouter</p>
+          <p className={`mt-4 text-sm leading-relaxed ${isLight ? "text-slate-600" : "text-white/60"}`}>
+            Try Safyne with no payment. Great for quick questions and everyday chat.
+          </p>
+          <ul className={`mt-4 space-y-2 text-sm ${isLight ? "text-slate-700" : "text-white/80"}`}>
+            <li className="flex items-start gap-2">
+              <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
+              Unlimited basic chat (fair-use rate limits apply)
+            </li>
+            <li className="flex items-start gap-2">
+              <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
+              No credit card required
+            </li>
+          </ul>
+          <button
+            type="button"
+            onClick={() => void handleStartFree()}
+            className={`mt-6 w-full max-w-[267px] rounded-[10px] border px-4 py-2.5 text-sm font-medium transition hover:brightness-110 ${
+              isLight
+                ? "border-emerald-300 bg-emerald-600 text-white"
+                : "border-emerald-400/40 bg-emerald-600/80 text-white"
+            }`}
+          >
+            Start free
+          </button>
+        </motion.div>
+
+        <motion.div
+          className="mt-[clamp(2rem,6vw,4rem)] flex flex-col flex-wrap items-center justify-center gap-2.5 sm:flex-row sm:items-stretch"
+        >
           {tiers.map((tier, index) => (
             <motion.article
               key={tier.code}
@@ -286,7 +347,7 @@ const Pricing = () => {
               </div>
             </motion.article>
           ))}
-        </div>
+        </motion.div>
 
         <p
           className={`mt-12 max-w-[433px] text-center text-xs leading-relaxed md:mt-14 ${
