@@ -62,6 +62,7 @@ interface Message {
   id: string;
   role: "user" | "assistant";
   content: string;
+  isLoading?: boolean;
   feedback?: "up" | "down" | null;
   attachments?: Array<{
     filename: string;
@@ -86,6 +87,7 @@ interface ComposerProps {
     chargedCredits: number;
   }>;
   onRemoveAttachment: (filename: string) => void;
+  isSending?: boolean;
   placeholder?: string;
   large?: boolean;
 }
@@ -97,6 +99,7 @@ const Composer = ({
   onUpload,
   pendingAttachments,
   onRemoveAttachment,
+  isSending = false,
   placeholder,
   large
 }: ComposerProps) => {
@@ -181,12 +184,12 @@ const Composer = ({
       )}
       <button
         onClick={onSend}
-        disabled={!value.trim() && pendingAttachments.length === 0}
+        disabled={isSending || (!value.trim() && pendingAttachments.length === 0)}
         className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm transition hover:opacity-90 disabled:opacity-40"
-        aria-label="Send"
+        aria-label={isSending ? "Waiting for response" : "Send"}
         type="button"
       >
-        <Send className="h-4 w-4" />
+        {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
       </button>
       </div>
     </div>
@@ -364,6 +367,7 @@ const Chat = () => {
   const [subscriptionPlans, setSubscriptionPlans] = useState<SubscriptionPack[]>([]);
   const [activeSubscriptionCode, setActiveSubscriptionCode] = useState<SubscriptionPlanCode | null>(null);
   const [pendingAttachments, setPendingAttachments] = useState<Message["attachments"]>([]);
+  const [isSending, setIsSending] = useState(false);
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { theme, setTheme } = useTheme();
@@ -468,8 +472,10 @@ const Chat = () => {
   }, [loadPlanCatalog]);
 
   const sendMessage = async (text: string) => {
+    if (isSending) return;
     if (!text.trim() && !pendingAttachments?.length) return;
     let sessionId = activeSessionId;
+    const previousMessages = sessionId ? (messagesBySession[sessionId] ?? []) : [];
     if (!sessionId) {
       const autoId = safeId();
       sessionId = autoId;
@@ -484,20 +490,28 @@ const Chat = () => {
       content: text.trim() ? text : "Uploaded attachment",
       attachments: pendingAttachments ?? []
     };
+    const pendingAiId = safeId();
+    const pendingAiMsg: Message = {
+      id: pendingAiId,
+      role: "assistant",
+      content: "",
+      isLoading: true
+    };
 
     setMessagesBySession((prev) => ({
       ...prev,
-      [sessionId]: [...(prev[sessionId] ?? []), userMsg]
+      [sessionId]: [...(prev[sessionId] ?? []), userMsg, pendingAiMsg]
     }));
     setInput("");
     setPendingAttachments([]);
+    setIsSending(true);
     try {
       const token = await getAccessToken();
       if (!token) throw new Error("Please sign in again.");
       const attachmentHint = userMsg.attachments?.length
         ? `\n\nAttachments:\n${userMsg.attachments.map((a) => `- ${a.filename} (${a.mimetype}, ${a.sizeBytes} bytes)`).join("\n")}`
         : "";
-      const contextWindow = (messagesBySession[sessionId] ?? [])
+      const contextWindow = previousMessages
         .slice(-8)
         .map((m) => ({ role: m.role, content: m.content }));
       const response = await chatWithSafyneWithContext({
@@ -516,16 +530,22 @@ const Chat = () => {
       };
       setMessagesBySession((prev) => ({
         ...prev,
-        [sessionId]: [...(prev[sessionId] ?? []), aiMsg]
+        [sessionId]: (prev[sessionId] ?? []).map((m) => (m.id === pendingAiId ? aiMsg : m))
       }));
       await refreshBalance();
     } catch (error) {
+      setMessagesBySession((prev) => ({
+        ...prev,
+        [sessionId]: (prev[sessionId] ?? []).filter((m) => m.id !== pendingAiId)
+      }));
       const message = error instanceof Error ? error.message : "Failed to get AI response";
       if (message.toLowerCase().includes("attachment") || message.toLowerCase().includes("upgrade")) {
         toast.error(message, { description: "Upgrade to a paid plan for document uploads and premium models." });
       } else {
         toast.error(message);
       }
+    } finally {
+      setIsSending(false);
     }
   };
 
@@ -1076,6 +1096,7 @@ const Chat = () => {
                   onUpload={handleUpload}
                   pendingAttachments={(pendingAttachments ?? []).map((a) => ({ filename: a.filename, chargedCredits: a.chargedCredits }))}
                   onRemoveAttachment={handleRemoveAttachment}
+                  isSending={isSending}
                   placeholder="Type your request..."
                   large
                 />
@@ -1114,12 +1135,25 @@ const Chat = () => {
                         Safyne AI Response
                       </p>
                       <div className="rounded-2xl border border-border bg-secondary/45 px-5 py-4">
-                        <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground md:text-[15px]">
-                          {m.content}
-                        </p>
+                        {m.isLoading ? (
+                          <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                            <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                            <span>Safyne is thinking</span>
+                            <span className="flex items-center gap-1" aria-hidden>
+                              <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-primary/70 [animation-delay:-0.2s]" />
+                              <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-primary/70 [animation-delay:-0.1s]" />
+                              <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-primary/70" />
+                            </span>
+                          </div>
+                        ) : (
+                          <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground md:text-[15px]">
+                            {m.content}
+                          </p>
+                        )}
                       </div>
 
                       {/* Feedback buttons */}
+                      {!m.isLoading && (
                       <div className="mt-2 flex items-center gap-1 pl-1">
                         <button
                           onClick={() => handleFeedback(m.id, "up")}
@@ -1140,8 +1174,9 @@ const Chat = () => {
                           <ThumbsDown className="h-3.5 w-3.5" />
                         </button>
                       </div>
+                      )}
 
-                      {feedbackOpenFor === m.id && m.feedback && (
+                      {!m.isLoading && feedbackOpenFor === m.id && m.feedback && (
                         <FeedbackBox
                           type={m.feedback}
                           onSubmit={(text) => void submitFeedback(m.id, text)}
@@ -1160,6 +1195,7 @@ const Chat = () => {
                     onUpload={handleUpload}
                     pendingAttachments={(pendingAttachments ?? []).map((a) => ({ filename: a.filename, chargedCredits: a.chargedCredits }))}
                     onRemoveAttachment={handleRemoveAttachment}
+                    isSending={isSending}
                     placeholder="Type your request..."
                   />
                   <p className="mt-3 text-center text-xs text-muted-foreground">
