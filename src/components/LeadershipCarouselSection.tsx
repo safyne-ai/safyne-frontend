@@ -21,7 +21,7 @@ const leaders = [
   },
   {
     name: "Kapil Sharma",
-    roleLabel: "CEO",
+    roleLabel: "CO-Founder",
     quote:
       "While others burn capital on raw power, we've perfected the logic that turns every millisecond of AI into pure, scalable profit.",
     initials: "KS",
@@ -289,7 +289,7 @@ const LeadershipCarouselSection = () => {
           <h2
             className={`max-w-[340px] font-['Inter',sans-serif] text-[clamp(2rem,5vw,3.5rem)] font-medium leading-[1.16] tracking-[-0.015em] md:text-[56px] md:leading-[65px] ${h2Cls}`}
           >
-            Founder &amp; CEO
+            Founder &amp; CO-Founder
           </h2>
           <p
             className={`max-w-[433px] font-['Inter',sans-serif] text-[18px] font-normal leading-[30px] tracking-[-0.01em] md:text-[20px] md:leading-[31px] ${leadCls}`}

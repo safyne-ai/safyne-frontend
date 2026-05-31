@@ -1,7 +1,7 @@
 import { ArrowRight } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useTheme } from "@/hooks/use-theme";
 
@@ -16,6 +16,33 @@ const SPARKLES = [
   { top: "40%", left: "14%", size: 2, delay: 0.9, duration: 2.4 },
 ] as const;
 
+const CHAT_PREVIEWS = [
+  {
+    prompt: "Draft a launch checklist for our SaaS beta.",
+    response:
+      "Start with onboarding, billing tests, support macros, and a rollback plan. I would ship in three phases: private QA, invite-only beta, then public launch.",
+    model: "GPT-5.1",
+    routing: "Fastest reasoning route",
+    latency: "1.2s",
+  },
+  {
+    prompt: "Compare pricing options for indie developers.",
+    response:
+      "Keep the free tier generous for trials, then anchor paid plans around predictable credits, document uploads, and faster premium model access.",
+    model: "Gemini 3",
+    routing: "Cost-aware route",
+    latency: "0.9s",
+  },
+  {
+    prompt: "Summarize this customer feedback into actions.",
+    response:
+      "Top actions: simplify the first prompt, surface remaining credits earlier, and add examples for common workflows in the empty chat state.",
+    model: "Kimi",
+    routing: "Long-context route",
+    latency: "1.5s",
+  },
+] as const;
+
 /**
  * Hero — AI Startup UI Kit "Hero" frame.
  * https://www.figma.com/design/f0ZCnin5svWEUYpT9fp7C0/AI-Startup-Website-UI-Kit-%E2%80%94-Framer-Website-Kit--Community-?node-id=33-2112
@@ -25,8 +52,20 @@ const Hero = () => {
   const { isLoggedIn } = useAuth();
   const { theme } = useTheme();
   const [exiting, setExiting] = useState(false);
+  const [previewIndex, setPreviewIndex] = useState(0);
   const reduceMotion = useReducedMotion();
   const isLight = theme === "light";
+  const activePreview = CHAT_PREVIEWS[previewIndex];
+
+  useEffect(() => {
+    if (reduceMotion) return;
+
+    const intervalId = window.setInterval(() => {
+      setPreviewIndex((current) => (current + 1) % CHAT_PREVIEWS.length);
+    }, 4200);
+
+    return () => window.clearInterval(intervalId);
+  }, [reduceMotion]);
 
   const handleLaunch = () => {
     if (exiting) return;
@@ -262,19 +301,118 @@ const Hero = () => {
                 <span className="h-2.5 w-2.5 rounded-full bg-emerald-500/80" />
               </div>
               <div
-                className={`flex flex-1 items-center justify-center px-6 py-10 ${
+                className={`relative flex flex-1 items-center justify-center overflow-hidden px-4 py-6 sm:px-6 sm:py-8 ${
                   isLight
                     ? "bg-gradient-to-b from-violet-50/80 to-white"
                     : "bg-gradient-to-b from-[#120a1c] to-[#0a0612]"
                 }`}
               >
-                <p
-                  className={`max-w-md text-center text-[13px] leading-relaxed ${
-                    isLight ? "text-slate-400" : "text-[rgba(255,255,255,0.35)]"
+                <div
+                  className={`pointer-events-none absolute left-1/2 top-1/2 h-[420px] w-[420px] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[90px] ${
+                    isLight ? "bg-violet-200/55" : "bg-[#9855FF]/20"
                   }`}
+                  aria-hidden
+                />
+                <motion.div
+                  key={activePreview.prompt}
+                  initial={reduceMotion ? false : { opacity: 0, y: 18, scale: 0.98 }}
+                  animate={reduceMotion ? undefined : { opacity: 1, y: 0, scale: 1 }}
+                  transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+                  className={`relative flex w-full max-w-[760px] flex-col rounded-3xl border p-3 text-left shadow-2xl sm:p-4 ${
+                    isLight
+                      ? "border-violet-200/80 bg-white/85 shadow-violet-200/50"
+                      : "border-white/10 bg-black/25 shadow-black/40"
+                  }`}
+                  aria-live="polite"
                 >
-                  Product preview — your live chat experience opens after launch.
-                </p>
+                  <div
+                    className={`mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border px-3 py-2 ${
+                      isLight
+                        ? "border-violet-100 bg-violet-50/80 text-slate-600"
+                        : "border-white/10 bg-white/[0.04] text-white/60"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.18em]">
+                      <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.8)]" />
+                      Live chat preview
+                    </div>
+                    <div className="flex items-center gap-2 text-[11px]">
+                      <span
+                        className={`rounded-full px-2.5 py-1 ${
+                          isLight ? "bg-white text-violet-700 shadow-sm" : "bg-white/10 text-white"
+                        }`}
+                      >
+                        {activePreview.model}
+                      </span>
+                      <span>{activePreview.latency}</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="flex justify-end">
+                      <div
+                        className={`max-w-[82%] rounded-2xl rounded-tr-md px-4 py-3 text-sm leading-relaxed shadow-lg ${
+                          isLight
+                            ? "bg-zinc-900 text-white shadow-violet-100"
+                            : "bg-white text-zinc-950 shadow-black/20"
+                        }`}
+                      >
+                        {activePreview.prompt}
+                      </div>
+                    </div>
+
+                    <div className="flex justify-start">
+                      <div className="max-w-[88%]">
+                        <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#9855FF]">
+                          <span className="h-5 w-5 rounded-full bg-[#9855FF]/15 text-center text-[12px] leading-5 text-[#9855FF]">
+                            S
+                          </span>
+                          Safyne AI
+                        </div>
+                        <div
+                          className={`rounded-2xl rounded-tl-md border px-4 py-3 text-sm leading-relaxed ${
+                            isLight
+                              ? "border-violet-100 bg-white text-slate-700 shadow-sm"
+                              : "border-white/10 bg-white/[0.06] text-white/82"
+                          }`}
+                        >
+                          {activePreview.response}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div
+                    className={`mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border px-3 py-2 text-[11px] ${
+                      isLight
+                        ? "border-violet-100 bg-white/80 text-slate-500"
+                        : "border-white/10 bg-black/20 text-white/50"
+                    }`}
+                  >
+                    <span>{activePreview.routing}</span>
+                    <span className="flex items-center gap-1.5">
+                      Safyne is thinking
+                      <span className="flex items-center gap-1" aria-hidden>
+                        <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#9855FF]/80 [animation-delay:-0.2s]" />
+                        <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#9855FF]/80 [animation-delay:-0.1s]" />
+                        <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#9855FF]/80" />
+                      </span>
+                    </span>
+                  </div>
+
+                  <div
+                    className={`mt-3 flex items-center gap-2 rounded-2xl border px-3 py-2 ${
+                      isLight ? "border-violet-100 bg-slate-50/80" : "border-white/10 bg-white/[0.03]"
+                    }`}
+                  >
+                    <span className={`flex-1 text-xs ${isLight ? "text-slate-400" : "text-white/35"}`}>
+                      Ask Safyne anything...
+                    </span>
+                    <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#9855FF] text-white shadow-lg shadow-[#9855FF]/25">
+                      <ArrowRight className="h-4 w-4" />
+                    </span>
+                  </div>
+                </motion.div>
               </div>
             </div>
           </div>
